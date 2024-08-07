@@ -1,9 +1,5 @@
 type Tuple<T = unknown> = [T] | [undefined, string];
 
-type Player = Instance & {
-	Name: string;
-};
-
 declare namespace SafeFunctions {
 	interface Server {
 		BindToInvokeServer(Name: string, func: (Player: Player, ...args: unknown[]) => unknown): void;
