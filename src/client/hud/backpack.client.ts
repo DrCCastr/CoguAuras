@@ -112,9 +112,27 @@ function update() {
 		itemFrame.Parent = hotbarItems;
 		itemFrame.Visible = true;
 	});
+	hablities
+		.GetChildren()
+		.sort((a, b) => a.Name < b.Name)
+		.forEach(function (habilitie) {
+			const habFrame = exampleTool.Clone();
+
+			(habFrame.WaitForChild("HotKey").WaitForChild("TextLabel") as TextLabel).Text = (
+				habilitie.WaitForChild("HotKey") as StringValue
+			).Value;
+			(habFrame.WaitForChild("Image") as ImageLabel).Image =
+				"rbxassetid://" + (habilitie.WaitForChild("Image") as StringValue).Value;
+			(habFrame.WaitForChild("Name") as TextLabel).Text = (habilitie.WaitForChild("Name") as StringValue).Value;
+
+			habFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 0);
+			habFrame.Name = "Hab_" + habilitie.Name;
+			habFrame.Parent = hotbarItems;
+			habFrame.Visible = true;
+		});
 
 	oldFrames.forEach(function (frame) {
-		if (frame.Name.split("Tool").size() > 1) frame.Destroy();
+		if (frame.Name.split("Tool").size() > 1 || frame.Name.split("Hab").size() > 1) frame.Destroy();
 	});
 }
 

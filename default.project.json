@@ -1,5 +1,5 @@
 {
-	"name": "roblox-ts-game",
+	"name": "CoguAuras",
 	"globIgnorePaths": [
 		"**/package.json",
 		"**/tsconfig.json"
