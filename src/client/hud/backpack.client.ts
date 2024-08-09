@@ -1,5 +1,6 @@
 /* eslint-disable no-constant-condition */
 import { Players, ReplicatedStorage, UserInputService, TweenService } from "@rbxts/services";
+import SafeFunctions from "shared/ext-mod/events";
 
 const player = Players.LocalPlayer;
 
@@ -23,7 +24,7 @@ const connectionNumberMap = [
 ];
 
 const tools = player.WaitForChild("Tools") as Folder;
-const hablities = player.WaitForChild("Hablities") as Folder;
+const hablities = player.WaitForChild("Habilities") as Folder;
 
 const toolItems: Tool[] = [];
 let equiped: Tool | undefined;
@@ -31,6 +32,7 @@ let equiped: Tool | undefined;
 function handleUnequip() {
 	equiped!.Parent = tools;
 	equiped = undefined;
+	SafeFunctions.InvokeServer("hud.backpack.unequip", 5, []);
 }
 
 function handleEquip(tool: Tool) {
@@ -41,11 +43,15 @@ function handleEquip(tool: Tool) {
 			handleEquip(tool);
 		}
 
+		update();
 		return;
 	}
 
 	tool.Parent = player.Character;
 	equiped = tool;
+
+	SafeFunctions.InvokeServer("hud.backpack.equip", 5, [tool.Name]);
+	update();
 }
 
 function makeToolItemConnection(frame: Frame, tool: Tool, i: number) {
@@ -94,6 +100,14 @@ function update() {
 		makeToolItemConnection(itemFrame, tool, i);
 
 		(itemFrame.WaitForChild("HotKey").WaitForChild("TextLabel") as TextLabel).Text = tostring(i + 1);
+		(itemFrame.WaitForChild("Image") as ImageLabel).Image =
+			"rbxassetid://" + (tool.WaitForChild("Image") as StringValue).Value;
+		(itemFrame.WaitForChild("Name") as TextLabel).Text = (tool.WaitForChild("Name") as StringValue).Value;
+
+		if (equiped === tool) {
+			itemFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
+		}
+
 		itemFrame.Name = "Tool_" + tool.Name;
 		itemFrame.Parent = hotbarItems;
 		itemFrame.Visible = true;
