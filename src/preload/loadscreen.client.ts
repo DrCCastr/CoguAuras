@@ -10,18 +10,18 @@ let loadeds = 0;
 const recourses = game.GetDescendants();
 const maxRecourses = recourses.size();
 
-for (const recourse of recourses) {
+recourses.forEach(function (recourse) {
 	ContentProvider.PreloadAsync([recourse]);
 
 	loadeds += 1;
 	(LoadingScreen.WaitForChild("MainFrame").WaitForChild("MainText") as TextLabel).Text =
 		"Loading (" + loadeds + "/" + maxRecourses + ")";
-}
+});
 
-for (const frame of LoadingScreen.GetDescendants()) {
+LoadingScreen.GetDescendants().forEach(function (frame) {
 	if (frame.IsA("Frame")) {
 		TweenService.Create(frame, new TweenInfo(1), { BackgroundTransparency: 1 }).Play();
 	} else if (frame.IsA("TextLabel")) {
 		TweenService.Create(frame, new TweenInfo(1), { BackgroundTransparency: 1, TextTransparency: 1 }).Play();
 	}
-}
+});

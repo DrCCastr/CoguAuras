@@ -1,7 +1,8 @@
-import { Players } from "@rbxts/services";
+import { Players, StarterGui } from "@rbxts/services";
 
 const player = Players.LocalPlayer;
 
+StarterGui.SetCoreGuiEnabled("Backpack", false);
 const Tools = new Instance("Folder");
 Tools.Name = "Tools";
 Tools.Parent = player;

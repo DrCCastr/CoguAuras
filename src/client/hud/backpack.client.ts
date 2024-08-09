@@ -4,10 +4,9 @@ import { Players, ReplicatedStorage, UserInputService, TweenService } from "@rbx
 const player = Players.LocalPlayer;
 
 const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
-const HUD = playerGui.WaitForChild("HUD");
-const hotbar = HUD.WaitForChild("Hotbar");
-
-const exampleTool = hotbar.WaitForChild("Example");
+const HUD = playerGui.WaitForChild("HUD") as GuiObject;
+const hotbarItems = HUD.WaitForChild("Hotbar").WaitForChild("Items") as Frame;
+const exampleTool = hotbarItems.WaitForChild("Example") as Frame;
 
 const itemsConnections: RBXScriptConnection[][] = [];
 const connectionNumberMap = [
@@ -23,15 +22,87 @@ const connectionNumberMap = [
 	Enum.KeyCode.Zero,
 ];
 
-const backpackItems = [];
+const tools = player.WaitForChild("Tools") as Folder;
+const hablities = player.WaitForChild("Hablities") as Folder;
 
-const tools = player.WaitForChild("Tools");
-const hablities = player.WaitForChild("Habilities");
+const toolItems: Tool[] = [];
+let equiped: Tool | undefined;
 
-const items = [];
-let equiped;
+function handleUnequip() {
+	equiped!.Parent = tools;
+	equiped = undefined;
+}
 
-function update() {}
+function handleEquip(tool: Tool) {
+	if (equiped) {
+		if (equiped === tool) handleUnequip();
+		else {
+			handleUnequip();
+			handleEquip(tool);
+		}
+
+		return;
+	}
+
+	tool.Parent = player.Character;
+	equiped = tool;
+}
+
+function makeToolItemConnection(frame: Frame, tool: Tool, i: number) {
+	const connections: RBXScriptConnection[] = [];
+
+	connections.push(
+		(frame.WaitForChild("Button") as TextButton).Activated.Connect(function () {
+			handleEquip(tool);
+		}),
+	);
+	connections.push(
+		UserInputService.InputBegan.Connect(function (input, processed) {
+			if (processed) return;
+			if (input.KeyCode === connectionNumberMap[i]) {
+				handleEquip(tool);
+			}
+		}),
+	);
+
+	itemsConnections.push(connections);
+}
+
+function updateToolItems() {
+	toolItems.clear();
+	tools.GetChildren().forEach(function (tool) {
+		toolItems.push(tool as Tool);
+	});
+	if (equiped) toolItems.push(equiped);
+	toolItems.sort((a, b) => a.Name < b.Name);
+}
+
+function update() {
+	updateToolItems();
+	itemsConnections.forEach(function (connections) {
+		connections.forEach(function (connection) {
+			connection.Disconnect();
+		});
+	});
+	itemsConnections.clear();
+
+	const oldFrames = hotbarItems.GetChildren();
+
+	toolItems.forEach(function (tool, i) {
+		const itemFrame = exampleTool.Clone();
+
+		makeToolItemConnection(itemFrame, tool, i);
+
+		(itemFrame.WaitForChild("HotKey").WaitForChild("TextLabel") as TextLabel).Text = tostring(i + 1);
+		itemFrame.Name = "Tool_" + tool.Name;
+		itemFrame.Parent = hotbarItems;
+		itemFrame.Visible = true;
+	});
+
+	oldFrames.forEach(function (frame) {
+		if (frame.Name.split("Tool").size() > 1) frame.Destroy();
+	});
+}
 
 tools.ChildAdded.Connect(update);
 tools.ChildRemoved.Connect(update);
