@@ -1,64 +1,78 @@
-import { DataStoreService, Players } from "@rbxts/services";
+import { Players } from "@rbxts/services";
+import * as ProfileModule from "shared/ext-mod/profile";
 
-const dataStore = DataStoreService.GetDataStore("playerData");
-const instances: playerDataManager[] = [];
-
-interface playerData {
-	habilities: string[];
-	habilitiesEquiped: string[];
-	items: string[];
-	itemsEquiped: string[];
-	level: number;
-	xp: number;
+interface data {
+	Cash: number;
+	Inventory: string[];
 }
 
-export class playerDataManager {
-	player: Player;
-	data: playerData;
+const templateData: data = { Cash: 0, Inventory: [] };
+const profileStore = ProfileModule.GetProfileStore("PlayerProfile", templateData);
 
-	constructor(player: Player) {
-		this.player = player;
-		this.data = {
-			habilities: [],
-			habilitiesEquiped: [],
-			items: [],
-			itemsEquiped: [],
-			level: 1,
-			xp: 0,
-		};
+const profiles: { [key: string]: ProfileModule.Profile | undefined } = {};
 
-		this.loadData();
-		instances.push(this);
-	}
+function playerAdded(player: Player) {
+	const profile = profileStore.LoadProfileAsync("Player_" + player.UserId);
 
-	async loadData() {
-		try {
-			const savedData = await dataStore.GetAsync(this.getDataKey());
-			if (savedData !== undefined) {
-				this.data = savedData as unknown as playerData;
-			}
-		} catch (e) {
-			this.loadData();
-		}
-	}
+	if (profile !== undefined) {
+		profile.AddUserId(player.UserId);
+		profile.Reconcile(undefined, undefined);
 
-	async flush() {
-		try {
-			dataStore.SetAsync(this.getDataKey(), this.data);
-		} catch (e) {
-			this.flush();
-		}
-	}
+		profile.ListenToRelease(function () {
+			profiles[player.UserId] = undefined;
 
-	getDataKey(): string {
-		return `Player_${this.player.UserId}`;
-	}
+			player.Kick();
+		});
+
+		if (!player.IsDescendantOf(Players)) profile.Release();
+		else profiles[player.UserId] = profile;
+	} else player.Kick();
 }
 
-Players.PlayerRemoving.Connect(function (player) {
-	instances.forEach(function (instance) {
-		if ((instance.player = player)) {
-			instance.flush();
+function getProfile(player: Player) {
+	if (profiles[player.UserId] === undefined) {
+		error("Profile dont exist for " + player.Name);
+	}
+
+	return profiles[player.UserId]!;
+}
+
+export class PlayerDataHandler {
+	static init() {
+		Players.GetPlayers().forEach(function (player) {
+			task.spawn(playerAdded, player);
+		});
+
+		Players.PlayerAdded.Connect(playerAdded);
+		Players.PlayerRemoving.Connect(function (player) {
+			if (profiles[player.UserId]) profiles[player.UserId]!.Release();
+		});
+	}
+
+	static get(player: Player, key: string) {
+		const profile = getProfile(player);
+		if (profile.Data[key] === undefined) {
+			error("Data dont exist for " + key);
 		}
-	});
-});
+
+		return profile.Data[key];
+	}
+
+	static set(player: Player, key: string, value: unknown) {
+		const profile = getProfile(player);
+		if (profile.Data[key] === undefined) {
+			error("Data dont exist for " + key);
+		}
+
+		profile.Data[key] = value;
+	}
+
+	static update(player: Player, key: string, callback: (oldData: unknown) => unknown) {
+		const profile = getProfile(player);
+
+		const oldData = this.get(player, key);
+		const newData = callback(oldData);
+
+		this.set(player, key, newData);
+	}
+}
