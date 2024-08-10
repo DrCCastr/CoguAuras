@@ -52,7 +52,8 @@ export class PlayerDataHandler {
 	static get(player: Player, key: string) {
 		const profile = getProfile(player);
 		if (profile.Data[key] === undefined) {
-			error("Data dont exist for " + key);
+			if (key === "root") return profile.Data;
+			else error("Data dont exist for " + key);
 		}
 
 		return profile.Data[key];
