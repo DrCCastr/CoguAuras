@@ -5,7 +5,7 @@ export function asset(path: string) {
 	let actualPath = ReplicatedStorage.WaitForChild("Assets");
 
 	paths.forEach(function (path) {
-		actualPath = actualPath.WaitForChild("path");
+		actualPath = actualPath.WaitForChild(path);
 	});
 
 	return actualPath;

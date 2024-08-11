@@ -1,4 +1,4 @@
-import * as data from "./cmd/data";
+import * as data from "./cmdFiles/data";
 
 export function getCommand(name: string): undefined | ((player: Player, args: string[]) => void) {
 	if (name === "showData") return data.showData;

@@ -32,7 +32,7 @@ let equiped: Tool | undefined;
 function handleUnequip() {
 	equiped!.Parent = tools;
 	equiped = undefined;
-	SafeFunctions.InvokeServer("hud.backpack.unequip", 5, []);
+	SafeFunctions.InvokeServer("hud.backpack.unequip", 5);
 }
 
 function handleEquip(tool: Tool) {
@@ -50,7 +50,7 @@ function handleEquip(tool: Tool) {
 	tool.Parent = player.Character;
 	equiped = tool;
 
-	SafeFunctions.InvokeServer("hud.backpack.equip", 5, [tool.Name]);
+	SafeFunctions.InvokeServer("hud.backpack.equip", 5, tool.Name);
 	update();
 }
 
@@ -135,6 +135,8 @@ function update() {
 		if (frame.Name.split("Tool").size() > 1 || frame.Name.split("Hab").size() > 1) frame.Destroy();
 	});
 }
+
+update();
 
 tools.ChildAdded.Connect(update);
 tools.ChildRemoved.Connect(update);

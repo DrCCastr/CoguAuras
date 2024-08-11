@@ -76,4 +76,8 @@ export class PlayerDataHandler {
 
 		this.set(player, key, newData);
 	}
+
+	static waitProfile(player: Player) {
+		while (profiles[player.UserId] === undefined) task.wait();
+	}
 }
