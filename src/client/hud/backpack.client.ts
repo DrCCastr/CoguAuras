@@ -142,3 +142,5 @@ tools.ChildAdded.Connect(update);
 tools.ChildRemoved.Connect(update);
 hablities.ChildAdded.Connect(update);
 hablities.ChildRemoved.Connect(update);
+
+player.CharacterAppearanceLoaded.Connect(update);

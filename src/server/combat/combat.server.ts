@@ -2,6 +2,14 @@ import SafeFunctions from "shared/ext-mod/events";
 import * as toolMap from "server/combat/toolMap";
 
 const charConnections: { [key: number]: RBXScriptConnection[] } = [];
+const activesCooldown: { [key: number]: { [key: string]: boolean } } = [];
+
+function delay(time: number, callback: () => unknown) {
+	task.spawn(function () {
+		task.wait(time);
+		callback();
+	});
+}
 
 function getToolModule(tool: string) {
 	return toolMap.getTool(tool);
@@ -15,14 +23,26 @@ SafeFunctions.BindToInvokeServer("attack", function (player, mousePos, state, at
 
 	if (!tool || !tool.FindFirstChild("Combat")) return;
 	if (!attacksKey.includes(attack as string)) return;
+	if (activesCooldown[player.UserId] && activesCooldown[player.UserId][attack as string]) return;
 
 	suffix = state === 0 ? "_Begin" : "_End";
 
 	const module = getToolModule((tool.WaitForChild("Id") as StringValue).Value);
 	if (module !== undefined) {
 		const methodName = (attack + suffix) as keyof toolMap.ToolModule;
+
 		if (typeIs(module[methodName], "function")) {
-			module[methodName](player, mousePos as CFrame);
+			if (state === 1) {
+				activesCooldown[player.UserId] =
+					activesCooldown[player.UserId] !== undefined ? activesCooldown[player.UserId] : {};
+				activesCooldown[player.UserId][attack as string] = true;
+
+				delay(module.Data.Cooldowns[attack as string], function () {
+					activesCooldown[player.UserId][attack as string] = false;
+				});
+			}
+
+			(module[methodName] as Function)(player, mousePos as CFrame);
 		} else {
 			warn(`Method ${methodName} not found on tool ${tool.Name}`);
 		}
@@ -38,8 +58,9 @@ SafeFunctions.BindToInvokeServer("combatHandler.character", function (player, ch
 
 			const module = getToolModule((tool.WaitForChild("Id") as StringValue).Value);
 			const mousePos = SafeFunctions.InvokeClient(player, "mouse.getPos", 5) as unknown as CFrame;
+
 			if (module && typeIs(module.Equip, "function")) {
-				(module.Equip as Function)(player, mousePos);
+				module.Equip(player, mousePos);
 			} else {
 				warn(`Method Equip not found on tool ${tool.Name}`);
 			}
@@ -52,8 +73,9 @@ SafeFunctions.BindToInvokeServer("combatHandler.character", function (player, ch
 
 			const module = getToolModule((tool.WaitForChild("Id") as StringValue).Value);
 			const mousePos = SafeFunctions.InvokeClient(player, "mouse.getPos", 5) as unknown as CFrame;
+
 			if (module && typeIs(module.Unequip, "function")) {
-				(module.Unequip as Function)(player, mousePos);
+				module.Unequip(player, mousePos);
 			} else {
 				warn(`Method Unequip not found on tool ${tool.Name}`);
 			}

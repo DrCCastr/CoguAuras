@@ -1,5 +1,5 @@
 import { Players } from "@rbxts/services";
-import { asset } from "shared/self-mod/assets";
+import { PlayerModule } from "shared/class/playerModule";
 
 function handleCustomFolder(player: Player) {
 	const Tools = new Instance("Folder");
@@ -11,6 +11,11 @@ function handleCustomFolder(player: Player) {
 	Habilities.Parent = player;
 }
 
+function handlePlayerModule(player: Player) {
+	new PlayerModule(player);
+}
+
 Players.PlayerAdded.Connect((player) => {
 	handleCustomFolder(player);
+	handlePlayerModule(player);
 });

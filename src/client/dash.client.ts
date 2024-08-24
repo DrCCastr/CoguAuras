@@ -10,9 +10,11 @@ UserInputService.InputBegan.Connect((input) => {
 		db = true;
 		const player = Players.LocalPlayer;
 		const character = player.Character;
+
 		if (character) {
 			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			const rootPart = character.FindFirstChild("HumanoidRootPart") as BasePart | undefined;
+
 			if (humanoid && rootPart) {
 				let impulse = 0.75;
 				const con: RBXScriptConnection = RunService.RenderStepped.Connect((dt) => {
@@ -31,6 +33,7 @@ UserInputService.InputBegan.Connect((input) => {
 				}
 			}
 		}
+
 		task.wait(0.25);
 		db = false;
 	}
